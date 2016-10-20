@@ -1,7 +1,7 @@
 sluggo
 ======
 
-sluggo is a shell that handles multiple REPLs.
+sluggo is a shell that can handle multiple REPLs.
 
 It provides a few REPLs implementations, including
 a git REPL, a Python REPL, and a general command
@@ -37,4 +37,3 @@ from sluggo:
     hey
     > it's annoying
     it's annoying
-
