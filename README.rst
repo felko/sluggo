@@ -19,7 +19,7 @@ to switch between REPLs:
 sluggo is extensible. That means you can define your
 own REPLs easily:
 
-.. code:: python3
+.. code:: python
 
     import sluggo
 
