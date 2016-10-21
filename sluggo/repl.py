@@ -34,7 +34,10 @@ class REPLError(Exception):
 class _REPLHook:
     def __init__(self, fn, patterns):
         self.fn = fn
-        self.patterns = list(map(re.compile, patterns))
+        self.patterns = []
+
+        for pat in patterns:
+            self.patterns.append(re.compile('^' + pat + '$'))
 
     def process(self, string):
         for pat in self.patterns:
@@ -97,7 +100,7 @@ class REPL(metaclass=REPLMeta):
             atexit.register(readline.write_history_file, hist_file_path)
 
             readline.parse_and_bind('tab: complete')
-            #readline.set_completer_delims(' \t\n')
+            readline.set_completer_delims(' \t\n')
             readline.set_completer(self.completer)
 
     @property
@@ -151,6 +154,9 @@ class REPL(metaclass=REPLMeta):
     def eval(self, input):
         raise REPLError("Couldn't interpret the command {!r}".format(input))
 
+    def init(self):
+        pass
+
     def update(self):
         pass
 
@@ -159,7 +165,7 @@ class sys(REPL):
     def __init__(self):
         self.prompt = '$ '
 
-    @on('cd\s+(.*)')
+    @on(r'cd\s+(.*)')
     def eval_cd(self, path):
         os.chdir(path)
 

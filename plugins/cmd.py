@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.4
 # coding: utf-8
 
-import shlex
 import subprocess
 import sluggo
 
@@ -12,6 +11,4 @@ class cmd(sluggo.REPL):
         self.cmd = cmd
 
     def eval(self, input):
-        cmd = shlex.split(input)
-        cmd.insert(0, self.cmd)
-        subprocess.call(cmd)
+        subprocess.call(self.cmd + ' ' + input, shell=True)
