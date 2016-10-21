@@ -7,6 +7,8 @@ __all__ = (
     'system',
     'on',
     'CONF_DIR',
+    'HIST_DIR',
+    'PLUGIN_DIR',
     'CONF_FILE'
 )
 
@@ -21,6 +23,8 @@ import functools
 from collections import OrderedDict
 
 CONF_DIR = os.path.expanduser('~/.sluggo/')
+HIST_DIR = os.path.expanduser('~/.sluggo/history')
+PLUGIN_DIR = os.path.expanduser('~/.sluggo/plugins')
 CONF_FILE = os.path.expanduser('~/.sluggorc')
 
 
@@ -81,10 +85,10 @@ class REPL(metaclass=REPLMeta):
         self.prompt = self.name + '> '
 
         if register_history:
-            if not os.path.exists(CONF_DIR):
-                os.makedirs(CONF_DIR)
+            if not os.path.exists(HIST_DIR):
+                os.makedirs(HIST_DIR)
 
-            hist_file_path = os.path.join(CONF_DIR, self.name)
+            hist_file_path = os.path.join(HIST_DIR, self.name)
 
             try:
                 readline.read_history_file(hist_file_path)
@@ -94,7 +98,7 @@ class REPL(metaclass=REPLMeta):
             atexit.register(readline.write_history_file, hist_file_path)
 
             readline.parse_and_bind('tab: complete')
-            readline.set_completer_delims(' \t\n')
+            #readline.set_completer_delims(' \t\n')
             readline.set_completer(self.completer)
 
     @property
