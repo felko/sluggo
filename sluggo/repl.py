@@ -4,7 +4,7 @@
 __all__ = (
     'REPL',
     'REPLError',
-    'system',
+    'sys',
     'on',
     'CONF_DIR',
     'HIST_DIR',
@@ -17,12 +17,11 @@ import os
 import readline
 import atexit
 import subprocess
-import shlex
 import code
 import functools
 from collections import OrderedDict
 
-CONF_DIR = os.path.expanduser('~/.sluggo/')
+CONF_DIR = os.path.expanduser('~/.sluggo')
 HIST_DIR = os.path.expanduser('~/.sluggo/history')
 PLUGIN_DIR = os.path.expanduser('~/.sluggo/plugins')
 CONF_FILE = os.path.expanduser('~/.sluggorc')
@@ -152,38 +151,17 @@ class REPL(metaclass=REPLMeta):
     def eval(self, input):
         raise REPLError("Couldn't interpret the command {!r}".format(input))
 
+    def update(self):
+        pass
 
-class system(REPL):
+
+class sys(REPL):
     def __init__(self):
         self.prompt = '$ '
 
-    def eval(self, input):
-        cmd = map(os.path.expanduser, shlex.split(input))
-        subprocess.call(cmd)
-
-
-class cmd(REPL):
-    def __init__(self, cmd):
-        self.prompt = cmd + '> '
-        self.cmd = cmd
+    @on('cd\s+(.*)')
+    def eval_cd(self, path):
+        os.chdir(path)
 
     def eval(self, input):
-        cmd = shlex.split(input)
-        cmd.insert(0, self.cmd)
-        subprocess.call(cmd)
-
-class git(cmd):
-    def __init__(self):
-        super().__init__('git')
-
-class py(REPL):
-    def __init__(self):
-        self.prompt = '>>> '
-        self.console = code.InteractiveConsole()
-
-    def eval(self, input):
-        self.console.push(input)
-
-    def interpret_multi(self, lines):
-        src = '\n'.join(lines)
-        self.console.runsource(src)
+        subprocess.call(input, shell=True)
