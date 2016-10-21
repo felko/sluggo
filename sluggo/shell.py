@@ -9,6 +9,7 @@ import os
 import glob
 import traceback
 import colorama
+import subprocess
 from importlib.machinery import SourceFileLoader
 from collections import OrderedDict
 
@@ -20,9 +21,11 @@ colorama.init()
 class Shell(REPL):
     def __init__(self, base_repl=None):
         base_repl = sys() or base_repl
-        self.repls = OrderedDict()
-        self.repls[base_repl.name] = base_repl
+        repls = OrderedDict()
+        repls[base_repl.name] = base_repl
+
         self.cmds = {}
+        self.settings = {'repl': repls}
 
         self.prompt = ''
         self.current_repl_name = base_repl.name
@@ -30,6 +33,14 @@ class Shell(REPL):
 
         self.load_conf()
         self.load_plugins()
+
+    @property
+    def repls(self):
+        return self.settings['repl']
+
+    @repls.setter
+    def repls(self, value):
+        self.settings['repl'] = value
 
     def load_conf(self):
         if os.path.exists(os.path.expanduser(CONF_FILE)):
@@ -102,6 +113,39 @@ class Shell(REPL):
     @on(r'!alias\s+(\w+)\s+(.*)')
     def eval_alias(self, cmd_name, cmd):
         self.cmds[cmd_name] = cmd
+
+    @on(r'!set\s+([\w.]+)\s+(.+)')
+    def eval_set(self, setting, value):
+        tree = self.settings
+        *nodes, leaf = setting.split('.')
+
+        for node in nodes:
+            if isinstance(tree, dict):
+                try:
+                    tree = tree[node]
+                except KeyError:
+                    tree[node] = {}
+                    tree = tree[node]
+            else:
+                try:
+                    tree = getattr(tree, node)
+                except AttributeError:
+                    tree[node] = {}
+                    tree = getattr(tree, node)
+
+        if isinstance(tree, dict):
+            tree[leaf] = value
+        else:
+            setattr(tree, leaf, value)
+
+    @on(r'!cls')
+    def eval_cls(self):
+        if os.name in ('nt', 'dos'):
+            subprocess.call('cls')
+        elif os.name in ('linux', 'osx', 'posix'):
+            subprocess.call('clear')
+        else:
+            print('\n' * 120)
 
     @on(r'!(\w+)')
     def eval_cmd(self, cmd_name):
