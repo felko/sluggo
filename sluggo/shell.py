@@ -20,7 +20,9 @@ colorama.init()
 
 class Shell(REPL):
     def __init__(self, base_repl=None):
-        base_repl = sys() or base_repl
+        self.load_plugins()
+
+        base_repl = REPL.get_repl_with_name('sys')() or base_repl
         repls = OrderedDict()
         repls[base_repl.name] = base_repl
 
@@ -32,7 +34,6 @@ class Shell(REPL):
         self.running = False
 
         self.load_conf()
-        self.load_plugins()
 
     @property
     def repls(self):
@@ -98,7 +99,16 @@ class Shell(REPL):
 
     @on(r'!close\s+(\w+)')
     def eval_close(self, repl_name):
-        del self.repls[repl_name]
+        try:
+            del self.repls[repl_name]
+        except KeyError:
+            raise REPLError('REPL {!r} is not opened.'.format(repl_name))
+
+        if repl_name == self.current_repl_name:
+            if not self.repls:
+                self.running = False
+            else:
+                self.current_repl_name = list(self.repls.values())[-1].name
 
     @on(r'!open\s+(\w+)\s*(.*)')
     def eval_open(self, repl_name, args):

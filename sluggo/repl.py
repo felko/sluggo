@@ -56,11 +56,14 @@ def on(*patterns):
 
 
 class REPLMeta(type):
+    instances = {}
+
     def __prepare__(mcs, cls):
         return OrderedDict()
 
     def __init__(cls, name, bases, attrs):
         super().__init__(name, bases, attrs)
+        REPLMeta.instances[name] = cls
 
         cls.hooks = []
 
@@ -70,16 +73,10 @@ class REPLMeta(type):
 
 
     def get_repl_with_name(cls, name):
-        for subcls in cls.__subclasses__():
-            if subcls.__name__ == name:
-                return subcls
-            else:
-                try:
-                    return subcls.get_repl_with_name(name)
-                except REPLError:
-                    continue
-
-        raise REPLError('No REPL named {}'.format(name))
+        try:
+            return REPLMeta.instances[name]
+        except KeyError:
+            raise REPLError('No REPL named {}'.format(name))
 
 
 class REPL(metaclass=REPLMeta):
