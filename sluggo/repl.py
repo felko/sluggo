@@ -4,28 +4,65 @@
 __all__ = (
     'REPL',
     'REPLError',
-    'system'
+    'system',
+    'on',
+    'CONF_DIR',
+    'CONF_FILE'
 )
 
+import re
 import os
 import readline
 import atexit
 import subprocess
 import shlex
 import code
+import functools
+from collections import OrderedDict
 
 CONF_DIR = os.path.expanduser('~/.sluggo/')
+CONF_FILE = os.path.expanduser('~/.sluggorc')
 
 
 class REPLError(Exception):
     pass
 
 
-class REPL:
-    def __init__(self):
-        self.prompt = self.name
+class _REPLHook:
+    def __init__(self, fn, patterns):
+        self.fn = fn
+        self.patterns = list(map(re.compile, patterns))
 
-    @classmethod
+    def process(self, string):
+        for pat in self.patterns:
+            m = pat.match(string)
+
+            if m:
+                def _wrapper_func(obj):
+                    return self.fn(obj, *m.groups(), **m.groupdict())
+                return _wrapper_func
+        else:
+            raise REPLError("Couldn't parse {!r}".format(string))
+
+
+def on(*patterns):
+    return functools.partial(_REPLHook, patterns=patterns)
+
+
+class REPLMeta(type):
+    def __prepare__(mcs, cls):
+        return OrderedDict()
+
+    def __init__(cls, name, bases, attrs):
+        super().__init__(name, bases, attrs)
+
+        cls.hooks = []
+
+        for _, val in attrs.items():
+            if isinstance(val, _REPLHook):
+                cls.hooks.append(val)
+
+
     def get_repl_with_name(cls, name):
         for subcls in cls.__subclasses__():
             if subcls.__name__ == name:
@@ -38,11 +75,11 @@ class REPL:
 
         raise REPLError('No REPL named {}'.format(name))
 
-    @property
-    def name(self):
-        return self.__class__.__name__
 
+class REPL(metaclass=REPLMeta):
     def __init__(self, register_history=True):
+        self.prompt = self.name + '> '
+
         if register_history:
             if not os.path.exists(CONF_DIR):
                 os.makedirs(CONF_DIR)
@@ -59,6 +96,10 @@ class REPL:
             readline.parse_and_bind('tab: complete')
             readline.set_completer_delims(' \t\n')
             readline.set_completer(self.completer)
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def completer(self, text, state):
         text = os.path.expanduser(text)
@@ -78,8 +119,34 @@ class REPL:
 
         return os.path.join(head, candidates[state])
 
+    def interpret(self, input):
+        for hook in self.hooks:
+            try:
+                f = hook.process(input)
+            except REPLError:
+                continue
+            else:
+                return f(self)
+
+        self.eval(input)
+
+    def interpret_multi(self, lines):
+        multi = []
+
+        for line in lines:
+            if multi:
+                if line == '!}':
+                    self.interpret_multi(multi)
+                    multi.clear()
+                else:
+                    multi.append(line)
+            elif line == '!{':
+                multi.append(line)
+            else:
+                self.interpret(line)
+
     def eval(self, input):
-        raise NotImplementedError('{}.eval is not defined.'.format(self.__class__.__qualname__))
+        raise REPLError("Couldn't interpret the command {!r}".format(input))
 
 
 class system(REPL):
@@ -87,7 +154,7 @@ class system(REPL):
         self.prompt = '$ '
 
     def eval(self, input):
-        cmd = shlex.split(input)
+        cmd = map(os.path.expanduser, shlex.split(input))
         subprocess.call(cmd)
 
 
@@ -112,3 +179,7 @@ class py(REPL):
 
     def eval(self, input):
         self.console.push(input)
+
+    def interpret_multi(self, lines):
+        src = '\n'.join(lines)
+        self.console.runsource(src)

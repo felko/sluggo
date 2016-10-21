@@ -33,7 +33,7 @@ from sluggo:
 .. code:: bash
 
     $ !go parrot
-    > hey
+    parrot> hey
     hey
-    > it's annoying
+    parrot> it's annoying
     it's annoying
