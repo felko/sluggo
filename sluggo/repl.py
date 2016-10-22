@@ -164,7 +164,7 @@ class sys(REPL):
 
     @on(r'cd\s+(.*)')
     def eval_cd(self, path):
-        os.chdir(path)
+        os.chdir(os.path.expanduser(path))
 
     def eval(self, input):
         subprocess.call(input, shell=True)
