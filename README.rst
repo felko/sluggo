@@ -10,11 +10,16 @@ REPL.
 sluggo features a few basic commands that allow you
 to switch between REPLs:
 
-* ``!quit [repl]``: closes the specified REPL or the current one if no argument is given.
 * ``!go [repl]``: switch to the specified REPL
 * ``@[repl] [cmd]``: executes the command from the specified REPL
 * ``$[cmd]``: executes a system command
+* ``!open [repl]``: opens a REPL session without switching
+* ``!close [repl]``: closes the specified REPL
+* ``!alias [name] [cmd]``: Creates an alias to a command that can be called with ``![name]``
+* ``!quit``: closes the current one if no argument is given
 * ``!exit``: exits sluggo
+* ``!cls``: clears the console
+* ``!reload``: reloads the configuration file and the plugins
 
 sluggo is extensible. That means you can define your
 own REPLs easily:
