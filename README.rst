@@ -7,6 +7,15 @@ It provides a few REPLs implementations, including
 a git REPL, a Python REPL, and a general command
 REPL.
 
+
+Demo
+----
+
+`demo <https://asciinema.org/a/8i56cd2twd96r9xpxwp4m6saf>`_
+
+Features
+--------
+
 sluggo features a few basic commands that allow you
 to switch between REPLs:
 
