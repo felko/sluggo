@@ -32,8 +32,8 @@ own REPLs easily:
         def eval(self, input):
             print(input)
 
-And that is all you need to start your parrot REPL
-from sluggo:
+You just need to put this in your ~/.sluggo/plugins directory for it to be
+loaded automatically:
 
 .. code:: bash
 
